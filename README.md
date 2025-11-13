@@ -1,8 +1,37 @@
-# typings
+# typings-io
 
-<a href="https://typings.gg" target="_blank">typings.gg</a> is a sleek and modern typing test website. it supports many custom themes
+A fork of <a href="https://typings.gg" target="_blank">typings.gg</a> - a sleek and modern typing test website with user authentication and game history tracking.
 
 ![typings.gg](img/typings-screen-shot.png)
+
+## 🆕 New Features
+
+- **🔐 User Authentication**: Sign in with Clerk to save your progress across devices
+- **📊 Game History Tracking**: Automatically saves your last 100 typing tests
+- **📈 Analytics Dashboard**: View detailed performance charts and statistics
+- **🎯 Performance Insights**: Track your average WPM, accuracy, and improvement over time
+
+## 🚀 Quick Start
+
+1. **Set up Clerk Authentication**
+   - Create a free account at [clerk.com](https://clerk.com)
+   - Get your publishable key from the Clerk dashboard
+   - Add it to `clerk-init.js` (see [SETUP.md](SETUP.md) for detailed instructions)
+
+2. **Run the application**
+   ```bash
+   # Using Python
+   python3 -m http.server 8000
+   
+   # Using Node.js
+   npx http-server -p 8000
+   ```
+
+3. **Start typing!**
+   - Sign in to save your results
+   - View your history by clicking the "history" link
+
+For detailed setup instructions, see [SETUP.md](SETUP.md)
 
 ## theme
 

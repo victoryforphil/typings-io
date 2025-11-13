@@ -20,10 +20,38 @@ body {
   justify-content: space-between;
 }
 
+#auth-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 42rem;
+  padding: 0 1rem;
+  margin-top: 1.2rem;
+}
+
 #header {
   margin: 0;
-  margin: 1.2rem 0 0 0;
   line-height: 2rem;
+}
+
+#user-section {
+  display: flex;
+  align-items: center;
+}
+
+#user-button {
+  font-size: 0.9rem;
+}
+
+#user-button button {
+  border: none;
+  border-radius: 0.2rem;
+  font-family: inherit;
+}
+
+#sign-in-btn:hover, #sign-out-btn:hover {
+  opacity: 0.8;
 }
 
 #command-center {

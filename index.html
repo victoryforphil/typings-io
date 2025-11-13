@@ -15,13 +15,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>typings</title>
-    <meta name="description" content="typings.gg is a sleek and modern typing test website. it support many custom themes" />
+    <title>typings-io</title>
+    <meta name="description" content="typings-io is a sleek and modern typing test website. it support many custom themes" />
     <link rel="stylesheet" href="style.css" />
     <link id="theme" rel="stylesheet" href="themes/light.css" />
+    <!-- Clerk SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js" crossorigin="anonymous"></script>
   </head>
   <body>
-    <h2 id="header">typings</h2>
+    <div id="auth-header">
+      <h2 id="header">typings-io</h2>
+      <div id="user-section">
+        <div id="user-button" style="display: none;"></div>
+      </div>
+    </div>
     <div id="command-center" class="">
       <div class="bar">
         <div id="left-wing">
@@ -64,8 +71,10 @@
     </div>
     <div id="footer">
       <a href="https://github.com/briano1905/typings#typings" target="_blank" tabindex="3">user guide</a>/
-      <div id="show-themes"class="button" onClick="showThemeCenter();" tabindex="4">themes</div>
+      <div id="show-themes"class="button" onClick="showThemeCenter();" tabindex="4">themes</div>/
+      <a href="history.html" id="history-link" style="display: none;" tabindex="5">history</a>
     </div>
+    <script src="clerk-init.js"></script>
     <script src="main.js"></script>
   </body>
 </html>
