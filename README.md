@@ -1,8 +1,22 @@
-# typings
+# typings-io
 
-<a href="https://typings.gg" target="_blank">typings.gg</a> is a sleek and modern typing test website. it supports many custom themes
+typings-io is a refreshed fork of <a href="https://typings.gg" target="_blank">typings.gg</a> that layers in account support, synced game history, and an analytics dashboard—while keeping the original minimalist typing experience and theme system intact.
 
 ![typings.gg](img/typings-screen-shot.png)
+
+## Authentication & game history
+
+1. Copy `config.example.js` to `config.js`.
+2. Replace the placeholder value with your Clerk publishable key (`pk_test_...` or `pk_live_...`).
+3. Open the typing test, sign in with Clerk, and play normally. Each completed run is saved to your Clerk public metadata (up to the most recent 100 games).
+
+Results are stored client-side through Clerk; no additional backend is required.
+
+## History dashboard
+
+- Visit `history.html` (or use the `history` link in the header) to review charts and a detailed table of your runs.
+- The chart visualises WPM and accuracy over time; the table lists language, punctuation, and duration for each saved session.
+- When no history is available you’ll see guidance on how to start collecting data.
 
 ## theme
 

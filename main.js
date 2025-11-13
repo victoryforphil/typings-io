@@ -1,6 +1,20 @@
 // Get document element
 const textDisplay = document.querySelector('#text-display');
 const inputField = document.querySelector('#input-field');
+const authStatus = document.querySelector('#auth-status');
+const signInButton = document.querySelector('#sign-in-button');
+const userButtonRoot = document.querySelector('#user-button-root');
+const historyLink = document.querySelector('#history-link');
+
+// Constants
+const MAX_HISTORY_LENGTH = 100;
+
+// Clerk state
+let clerkClient = null;
+let clerkIsLoaded = false;
+let activeClerkUser = null;
+let lastSavedResultId = null;
+let saveErrorNotified = false;
 
 // Initialize typing mode variables
 let typingMode = 'wordcount';
@@ -214,27 +228,52 @@ inputField.addEventListener('keydown', e => {
 
 // Calculate and display result
 function showResult() {
-  let words, minute, acc;
+  let words = 0;
+  let minute = 1;
+  let acc = 0;
+
   switch (typingMode) {
-    case 'wordcount':
+    case 'wordcount': {
       words = correctKeys / 5;
-      minute = (Date.now() - startDate) / 1000 / 60;
+      minute = Math.max((Date.now() - startDate) / 1000 / 60, 0.01);
       let totalKeys = -1;
       wordList.forEach(e => (totalKeys += e.length + 1));
-      acc = Math.floor((correctKeys / totalKeys) * 100);
+      totalKeys = Math.max(totalKeys, 1);
+      acc = Math.min(Math.floor((correctKeys / totalKeys) * 100), 100);
       break;
-
-    case 'time':
+    }
+    case 'time': {
       words = correctKeys / 5;
-      minute = timeCount / 60;
+      minute = Math.max(timeCount / 60, 0.01);
       let sumKeys = -1;
-      for (i = 0; i < currentWord; i++) {
+      for (let i = 0; i < currentWord; i++) {
         sumKeys += wordList[i].length + 1;
       }
-      acc = acc = Math.min(Math.floor((correctKeys / sumKeys) * 100), 100);
+      sumKeys = Math.max(sumKeys, 1);
+      acc = Math.min(Math.floor((correctKeys / sumKeys) * 100), 100);
+      break;
+    }
+    default:
+      break;
   }
-  let wpm = Math.floor(words / minute);
+
+  const wpm = Math.floor(words / minute);
   document.querySelector('#right-wing').innerHTML = `WPM: ${wpm} / ACC: ${acc}`;
+
+  const resultPayload = {
+    id: `${Date.now()}`,
+    timestamp: new Date().toISOString(),
+    wpm,
+    accuracy: acc,
+    mode: typingMode,
+    language: getCookie('language') || 'english',
+    punctuation: Boolean(punctuation),
+    wordCount: typingMode === 'wordcount' ? Number(wordCount) : null,
+    timeLimitSeconds: typingMode === 'time' ? Number(timeCount) : null,
+    durationSeconds: Math.round(minute * 60),
+  };
+
+  saveGameResult(resultPayload);
 }
 
 // Command actions
@@ -391,6 +430,223 @@ function getCookie(cname) {
   return '';
 }
 
+function setAuthStatus(message, tone = 'info') {
+  if (!authStatus) {
+    return;
+  }
+  if (!message) {
+    authStatus.classList.add('hidden');
+    authStatus.textContent = '';
+    authStatus.removeAttribute('data-tone');
+    return;
+  }
+  authStatus.textContent = message;
+  authStatus.classList.remove('hidden');
+  authStatus.setAttribute('data-tone', tone);
+}
+
+function waitForClerkSDK(maxWait = 7000) {
+  if (window.Clerk) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+    const interval = setInterval(() => {
+      if (window.Clerk) {
+        clearInterval(interval);
+        resolve();
+      } else if (Date.now() - start > maxWait) {
+        clearInterval(interval);
+        reject(new Error('Clerk SDK failed to load within the allotted time.'));
+      }
+    }, 50);
+  });
+}
+
+async function initializeClerk() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  if (!window.CLERK_PUBLISHABLE_KEY) {
+    setAuthStatus('Add your Clerk publishable key to config.js to enable sign in and history tracking.');
+    return;
+  }
+
+  try {
+    await waitForClerkSDK();
+  } catch (error) {
+    console.error('Clerk SDK not available', error);
+    setAuthStatus('Authentication is currently unavailable. Check your network connection.', 'error');
+    return;
+  }
+
+  try {
+    await window.Clerk.load({ publishableKey: window.CLERK_PUBLISHABLE_KEY });
+  } catch (error) {
+    console.error('Failed to initialize Clerk', error);
+    setAuthStatus('Authentication is currently unavailable. Check console for details.', 'error');
+    return;
+  }
+
+  clerkClient = window.Clerk;
+  clerkIsLoaded = true;
+  activeClerkUser = clerkClient.user || null;
+
+  if (userButtonRoot && typeof clerkClient.mountUserButton === 'function') {
+    clerkClient.mountUserButton(userButtonRoot);
+  }
+
+  if (signInButton) {
+    signInButton.addEventListener('click', () => {
+      if (!clerkIsLoaded || !clerkClient || typeof clerkClient.openSignIn !== 'function') {
+        return;
+      }
+      clerkClient.openSignIn({ afterSignInUrl: window.location.href });
+    });
+  }
+
+  updateAuthUI(activeClerkUser);
+
+  if (typeof clerkClient.addListener === 'function') {
+    clerkClient.addListener(({ user }) => {
+      activeClerkUser = user || null;
+      if (!activeClerkUser) {
+        lastSavedResultId = null;
+      }
+      updateAuthUI(activeClerkUser);
+      if (activeClerkUser) {
+        saveErrorNotified = false;
+      }
+    });
+  }
+}
+
+function updateAuthUI(user) {
+  if (!clerkIsLoaded) {
+    return;
+  }
+
+  if (signInButton) {
+    if (user) {
+      signInButton.classList.add('hidden');
+    } else {
+      signInButton.classList.remove('hidden');
+    }
+  }
+
+  if (userButtonRoot) {
+    if (user) {
+      userButtonRoot.classList.remove('hidden');
+    } else {
+      userButtonRoot.classList.add('hidden');
+    }
+  }
+
+  if (historyLink) {
+    if (user) {
+      historyLink.classList.remove('hidden');
+    } else {
+      historyLink.classList.add('hidden');
+    }
+  }
+
+  if (user) {
+    if (!saveErrorNotified) {
+      setAuthStatus('');
+    }
+  } else {
+    setAuthStatus('Sign in to save your typing history and unlock the stats page.');
+  }
+}
+
+function parseOptionalNumber(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function sanitizeHistoryEntry(entry) {
+  const wpm = Number(entry.wpm);
+  const accuracy = Number(entry.accuracy);
+  return {
+    id: entry.id ? String(entry.id) : entry.timestamp,
+    timestamp: entry.timestamp,
+    wpm: Number.isFinite(wpm) ? wpm : 0,
+    accuracy: Number.isFinite(accuracy) ? accuracy : 0,
+    mode: entry.mode,
+    language: entry.language,
+    punctuation: Boolean(entry.punctuation),
+    wordCount: parseOptionalNumber(entry.wordCount),
+    timeLimitSeconds: parseOptionalNumber(entry.timeLimitSeconds),
+    durationSeconds: parseOptionalNumber(entry.durationSeconds),
+  };
+}
+
+function isValidHistoryEntry(entry) {
+  if (!entry || typeof entry !== 'object') {
+    return false;
+  }
+  if (typeof entry.timestamp !== 'string') {
+    return false;
+  }
+  if (!Number.isFinite(Number(entry.wpm))) {
+    return false;
+  }
+  if (!Number.isFinite(Number(entry.accuracy))) {
+    return false;
+  }
+  return true;
+}
+
+async function saveGameResult(result) {
+  if (!clerkIsLoaded || !activeClerkUser || !result || typeof result !== 'object') {
+    return;
+  }
+
+  const resultId = String(result.id || result.timestamp);
+  if (lastSavedResultId === resultId) {
+    return;
+  }
+
+  if (typeof activeClerkUser.update !== 'function') {
+    console.warn('Clerk user update function unavailable; skipping history save.');
+    return;
+  }
+
+  const currentMetadata = activeClerkUser.publicMetadata || {};
+  const existingHistory = Array.isArray(currentMetadata.gameHistory)
+    ? currentMetadata.gameHistory.filter(isValidHistoryEntry)
+    : [];
+  const sanitizedResult = sanitizeHistoryEntry(result);
+  const trimmedHistory = existingHistory.slice(0, MAX_HISTORY_LENGTH - 1);
+  const history = [sanitizedResult, ...trimmedHistory];
+
+  try {
+    const updatedUser = await activeClerkUser.update({
+      publicMetadata: {
+        ...currentMetadata,
+        gameHistory: history,
+      },
+    });
+    activeClerkUser = updatedUser || activeClerkUser;
+    lastSavedResultId = resultId;
+    if (saveErrorNotified) {
+      setAuthStatus('');
+      saveErrorNotified = false;
+    }
+  } catch (error) {
+    console.error('Unable to save typing history', error);
+    if (!saveErrorNotified) {
+      setAuthStatus('We could not sync your latest result. Please try again.', 'error');
+      saveErrorNotified = true;
+    }
+  }
+}
+
+initializeClerk();
 showAllThemes();
 function showAllThemes(){
     fetch(`themes/theme-list.json`)

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-126815322-3"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+
+      gtag('config', 'UA-126815322-3');
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>History | typings-io</title>
+    <meta
+      name="description"
+      content="Review your typings-io game history, trends, and performance charts."
+    />
+    <link rel="stylesheet" href="style.css" />
+    <link id="theme" rel="stylesheet" href="themes/light.css" />
+    <script async crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <header id="top-bar">
+      <h2 id="header"><a class="nav-link" href="index.html">typings-io</a></h2>
+      <div id="auth-area">
+        <a id="play-link" class="nav-link" href="index.html">test</a>
+        <span class="nav-current">history</span>
+        <button id="sign-in-button" class="link-button hidden" type="button">sign in</button>
+        <div id="user-button-root" class="hidden"></div>
+      </div>
+    </header>
+    <div id="auth-status" class="info-banner hidden" role="status"></div>
+    <main id="history-main">
+      <section id="history-overview">
+        <h3>Recent games</h3>
+        <div class="chart-area">
+          <canvas id="history-chart" aria-label="Typing performance over time"></canvas>
+        </div>
+        <div id="history-empty" class="info-banner hidden">Play a few rounds to build your history.</div>
+      </section>
+      <section id="history-details">
+        <h3>Game details</h3>
+        <div class="table-wrapper">
+          <table id="history-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Mode</th>
+                <th>WPM</th>
+                <th>Accuracy</th>
+                <th>Duration</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <footer id="footer">
+      <a href="https://github.com/briano1905/typings#typings" target="_blank">user guide</a>/
+      <a class="nav-link" href="index.html">back to test</a>
+    </footer>
+    <script src="config.js"></script>
+    <script src="history.js"></script>
+  </body>
+</html>
