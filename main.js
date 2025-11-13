@@ -235,6 +235,12 @@ function showResult() {
   }
   let wpm = Math.floor(words / minute);
   document.querySelector('#right-wing').innerHTML = `WPM: ${wpm} / ACC: ${acc}`;
+  
+  // Save result to Clerk if user is authenticated
+  if (typeof saveGameResult === 'function') {
+    const modeCount = typingMode === 'wordcount' ? wordCount : timeCount;
+    saveGameResult(wpm, acc, typingMode, modeCount, new Date().toISOString());
+  }
 }
 
 // Command actions
